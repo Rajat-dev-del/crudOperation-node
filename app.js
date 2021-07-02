@@ -3,7 +3,7 @@ const express = require("express");
 var cors = require('cors');
 var app = express();
 
-const HTTP_PORT = 4001
+const HTTP_PORT = 4003
 app.listen(HTTP_PORT, () => {
     console.log("Server is listening on port " + HTTP_PORT);
 });
@@ -24,14 +24,16 @@ const db = new sqlite3.Database('./index.db', (err) => {
                 console.log("Table already exists.");
             }
             let insert = 'INSERT INTO employees (source_lang, target_lang, sugestions,page_no) VALUES (?,?,?,?)';
-            db.run(insert, ["Hello how are you?", "", "SE", 1]);
-            db.run(insert, ["what are you doing?", "", "SSE", 1]);
-            db.run(insert, ["whats up?", "", "TL", 1]);
+            db.run(insert, ["Hello how are you?", "", "hello how are you?", 1]);
+            db.run(insert, ["what are you doing?", "", "what are you doing?", 1]);
+            db.run(insert, ["whats up?", "", "whats up?", 1]);
         });
     }
 });
 
 app.use(cors())
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/employees/:id", (req, res, next) => {
     var params = [req.params.id]
@@ -52,8 +54,9 @@ app.get("/employees", (req, res, next) => {
         res.status(200).json({ rows });
     });
 });
-app.post("/employees/", (req, res, next) => {
-    var reqBody = re.body;
+app.post("/employees", (req, res, next) => {
+    var reqBody = req.body;
+    console.log(reqBody);
     db.run(`INSERT INTO employees (source_lang, target_lang, sugestions, page_no) VALUES (?,?,?,?)`, [reqBody.source_lang, reqBody.target_lang, reqBody.sugestions, reqBody.page_no],
         function(err, result) {
             if (err) {
@@ -65,9 +68,10 @@ app.post("/employees/", (req, res, next) => {
             })
         });
 });
-app.patch("/employees/", (req, res, next) => {
-    var reqBody = re.body;
-    db.run(`UPDATE employees set source_lang = ?, target_lang = ?, sugestions = ?, page_no = ? WHERE sentance_id = ?`, [reqBody.source_lang, reqBody.target_lang, reqBody.sugestions, reqBody.sentance_id, reqBody.page_no],
+app.patch("/employees/:id", (req, res, next) => {
+    var reqBody = req.body;
+    console.log(reqBody)
+    db.run(`UPDATE employees set source_lang = ?, target_lang = ?, sugestions = ?, page_no = ? WHERE sentance_id = ?`, [reqBody.source_lang, reqBody.target_lang, reqBody.sugestions, reqBody.page_no, req.params.id],
         function(err, result) {
             if (err) {
                 res.status(400).json({ "error": res.message })
